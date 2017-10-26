@@ -5,34 +5,12 @@ import './App.css';
 class App extends Component {
    constructor(props) {
      super(props);
-     this.state = {
-      gridWidth: 50,
-      gridHeight: 70
-     }
    }
-
-   changeGridWidth = newWidth => {
-      this.setState({
-        gridWidth: newWidth
-      });
-   };
-
-   changeGridHeight = newHeight => {
-    this.setState({
-      gridHeight: newHeight
-    });
-   };
   
   render() {
-    const cellSize = 9;
-    let gridWidthSize = cellSize * this.state.gridWidth;
-    let gridWidthPixels = gridWidthSize + 'px';
-    const gridStyles = {
-      width: gridWidthPixels
-    };
     return(
-      <div style={gridStyles} className="game-container">
-        <Game width={this.state.gridWidth} height={this.state.gridHeight} updateHeight={this.changeGridHeight}/>
+      <div>
+        <Game />
       </div>
     );
   }
@@ -43,14 +21,17 @@ class ControlButtons extends Component {
     super(props);
   }
 
-  changeHeightToOneHundred = () => {
-    this.props.updateHeight(100);
+  changeSpecs = (width, height) => {
+    this.props.updateSpecs(width, height);
   };
 
   render() {
     return (
         <div className="control-buttons">
-          <button className="heightUpdate" onClick={this.changeHeightToOneHundred}></button>
+          <button className="heightUpdate" onClick={() => this.changeSpecs(50, 30)}>50x30</button>
+          <button className="heightUpdate" onClick={() => this.changeSpecs(50, 40)}>50x40</button>
+          <button className="heightUpdate" onClick={() => this.changeSpecs(50, 50)}>50x50</button>
+          <button className="heightUpdate" onClick={() => this.props.pause()}>Pause</button>
         </div>
     );
   }
@@ -60,34 +41,61 @@ class Game extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      gridSize: this.props.width * this.props.height,
+      gridWidth: 70,
+      gridHeight: 50,
       grid: [],
-      generationCount: 0
+      futureGrid: [],
+      generationCount: 0,
+      timer: null,
     };
   }
   
   componentWillMount() {
     this.createNewBoard();
   };
+
+  componentWillUnmount() {
+    this.clearInterval(this.state.timer);
+  }
+
+  updateGameGridSize = (width, height) => {
+    this.setState({
+      gridWidth: width,
+      gridHeight: height
+    })
+    this.createNewBoard();
+  };
+
+  pause = () => {
+    clearInterval(this.state.timer);
+  };
   
   //createBoard
   createNewBoard = () => {
-    let initialGrid = [];
-    for (var i = 0; i < this.state.gridSize; i++) {
+    let grid = [...this.state.grid];
+    let gridSize = this.state.gridWidth * this.state.gridHeight;
+    for (var i = 0; i < gridSize; i++) {
       let element = Math.floor(Math.random() * 2);
-      initialGrid.push(element);
+      grid.push(element);
     }
+    
     this.setState({ 
-        grid: initialGrid
+        grid: grid,
     });
-    setInterval(() => {this.nextGeneration()}, 500);
+
+    let timer = setInterval(() => {this.nextGeneration()}, 500);
+
+    this.setState({
+      timer: timer
+    });
   };
     
   //run next generation
   nextGeneration = () => {
-    let futureGrid = [];
-     for (var i = 0; i < this.state.gridSize; i++) {
-      futureGrid.push(this.compareCell(i));
+    let futureGrid = [...this.state.grid];
+    let gridSize = this.state.gridWidth * this.state.gridHeight;
+    for (var i = 0; i < gridSize; i++) {
+      futureGrid[i] = this.compareCell(i);
     } 
 
     this.setState({
@@ -100,8 +108,8 @@ class Game extends Component {
     let aliveNeighborCount = 0;
     let currentCell = this.state.grid[index];
     let currentGrid = this.state.grid;
-    const row = Number(this.props.width);
-    const height = Number(this.props.height);
+    const row = Number(this.state.gridWidth);
+    const height = Number(this.state.gridHeight);
     //check whether cell is top left corner
     if (index === 0) {
       if (currentGrid[1] === 0) aliveNeighborCount++;
@@ -183,6 +191,13 @@ class Game extends Component {
   };
   
   render() {
+    const cellSize = 9;
+    let gridWidthSize = cellSize * this.state.gridWidth;
+    let gridWidthPixels = gridWidthSize + 'px';
+    const gridStyles = {
+      width: gridWidthPixels
+    };
+
     let gridStructure = '';
     if (this.state.grid !== 'undefined') {
        gridStructure = this.state.grid.map((cell, i) => {
@@ -191,8 +206,9 @@ class Game extends Component {
       });
     }
     return (
-     <div>{gridStructure}
-     <ControlButtons updateHeight={this.props.updateHeight} updateWidth={this.changeGridWidth} />
+     <div style={gridStyles} className="game-container">
+        {gridStructure}
+        <ControlButtons updateSpecs={this.updateGameGridSize} pause={this.pause}/>
      </div>
     );
   }
