@@ -36,7 +36,8 @@ class ControlButtons extends Component {
           <button className="heightUpdate" onClick={() => this.changeSpecs(70, 50)}>70x50</button>
           <button className="heightUpdate" onClick={() => this.changeSpecs(50, 30)}>50x30</button>
           <button className="heightUpdate" onClick={() => this.changeSpecs(50, 50)}>50x50</button>
-          <button className="heightUpdate" onClick={() => this.props.pause()}>{this.props.pauseToggle ? "Resume" : "Pause"}</button>
+          <button className="pauseToggle" onClick={() => this.props.pause()}>{this.props.pauseToggle ? "Resume" : "Pause"}</button>
+          <button className="clear" onClick={() => this.props.clear()}>{this.props.boardCleared ? "Start" : "Clear"}</button>
         </div>
     );
   }
@@ -53,7 +54,8 @@ class Game extends Component {
       generationCount: 0,
       iterationSpeed: 250,
       timer: null,
-      pauseToggle: false
+      pauseToggle: false,
+      boardCleared: false
     };
   }
   
@@ -62,7 +64,6 @@ class Game extends Component {
   };
 
   updateGameGridSize = (width, height) => {
-    // $('.game-cells').empty();
     clearInterval(this.state.timer);
     this.setState({
       grid: [],
@@ -74,8 +75,30 @@ class Game extends Component {
     });
     setTimeout(() => { 
       this.createNewBoard();
-    }, 1000);    
-  
+    }, 1000);
+  };
+
+  clear = () => {
+    if (this.state.boardCleared) {
+      let timer = setInterval(() => {this.nextGeneration()}, this.state.iterationSpeed);
+
+      this.setState({
+        timer: timer,
+        boardCleared: false
+      });
+    } else {
+      clearInterval(this.state.timer);
+      let emptiedGrid = [...this.state.grid];
+      for (var i = 0; i < emptiedGrid.length; i++) {
+        emptiedGrid[i] = 1;
+      }
+      this.setState({
+        grid: emptiedGrid,
+        timer: null,
+        pauseToggle: false,
+        boardCleared: true
+      });
+    }
   };
 
   togglePause = () => {
@@ -223,6 +246,22 @@ class Game extends Component {
         }
     }
   };
+
+  modifyCell = index => {
+    if (this.state.boardCleared) {
+      let currentCell = this.state.grid[index];
+      let currentGrid = this.state.grid;
+      let modifiedGrid = [...this.state.grid];
+      if (currentCell === 0) {
+        modifiedGrid[index] = 1;
+      } else {
+        modifiedGrid[index] = 0;
+      }
+      this.setState({
+        grid: modifiedGrid
+      });
+    }
+  };
   
   render() {
     const cellSize = 9;
@@ -258,18 +297,17 @@ class Game extends Component {
     if (this.state.grid.length === 0) {
       gridStructure = (<div style={generatingMessageStyles}>Generating new board</div>);
     } else {
-      if (this.state.grid !== 'undefined') {
-         gridStructure = this.state.grid.map((cell, i) => {
+      gridStructure = this.state.grid.map((cell, i) => {
           const cellStatus = cell === 0 ? "alive" : cell === 1 ? "dead" : "old alive";
           const cellClasses = "cell " + cellStatus;
-          return (<div key={i} className={cellClasses} style={cellStatus === 'alive' ? aliveStyle : cellStatus === 'old alive' ? aliveOldStyle : deadStyle}></div>)
-        });
-      }
+          const cellStyle = cellStatus === 'alive' ? aliveStyle : cellStatus === 'old alive' ? aliveOldStyle : deadStyle;
+          return (<div key={i} className={cellClasses} style={cellStyle} onClick={() => this.modifyCell(i)}></div>)
+      });
     }
     return (
      <div style={gridStyles} className="game-container">
         <div className="game-cells" key="grid-struc" style={gridStyles}>{gridStructure}</div>
-        <ControlButtons updateSpecs={this.updateGameGridSize} pause={this.togglePause} pauseToggle={this.state.pauseToggle}/>
+        <ControlButtons updateSpecs={this.updateGameGridSize} pause={this.togglePause} pauseToggle={this.state.pauseToggle} clear={this.clear} boardCleared={this.state.boardCleared}/>
         <span>Generation: {this.state.generationCount}</span>
      </div>
     );
