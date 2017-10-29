@@ -96,7 +96,8 @@ class Game extends Component {
         grid: emptiedGrid,
         timer: null,
         pauseToggle: false,
-        boardCleared: true
+        boardCleared: true,
+        generationCount: 0
       });
     }
   };
@@ -106,7 +107,8 @@ class Game extends Component {
       let timer = setInterval(() => {this.nextGeneration()}, this.state.iterationSpeed);
 
       this.setState({
-        timer: timer
+        timer: timer,
+        pauseToggle: !this.state.pauseToggle
       });
     } else {
       clearInterval(this.state.timer);
