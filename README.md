@@ -1,3 +1,5 @@
+Project can be viewed [on github pages](https://awilliams27.github.io/React-Game-of-Life/)
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 To read more about Conway's Game of Life [visit here](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life).
